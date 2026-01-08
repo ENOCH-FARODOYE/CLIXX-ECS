@@ -1,0 +1,5 @@
+packer_cache/
+*.tfstate
+*.tfstate.*
+.terraform/
+*.log
