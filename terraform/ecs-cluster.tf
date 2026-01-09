@@ -1,9 +1,10 @@
 data "aws_ami" "ecs" {
   most_recent = true
-  owners      = ["self"]
+  owners      = ["451873237827"]  # Automation account where AMI exists
+  
   filter {
     name   = "name"
-    values = [var.ecs_ami_name]
+    values = ["clixx-ecs-ami-*"]
   }
 }
 
