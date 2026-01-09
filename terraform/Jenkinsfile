@@ -34,11 +34,15 @@ pipeline {
             }
         }
 
-        stage('Clean State') {
+        stage('Force Clean') {
             steps {
                 sh '''
                 cd terraform
-                rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+                rm -f .terraform.lock.hcl
+                rm -f terraform.tfstate*
+                rm -f tfplan
+                rm -rf .terraform
+                ls -la
                 '''
             }
         }
@@ -49,7 +53,7 @@ pipeline {
                 
                 sh '''
                 cd terraform
-                terraform init -upgrade
+                terraform init -reconfigure
                 '''
             }
         }
