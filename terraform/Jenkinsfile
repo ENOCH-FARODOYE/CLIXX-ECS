@@ -1,16 +1,12 @@
 pipeline {
     agent any
 
-    environment {
-        TF_VERSION = "1.6.0"
-    }
-
     stages {
-        stage('Confirm Deployment') {
+        stage('Confirm Destroy') {
             steps {
                 script {
-                    input(id: 'confirm', message: 'Deploy CLIXX ECS Infrastructure?', parameters: [
-                        [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Deploy infrastructure', name: 'confirm']
+                    input(id: 'confirm', message: 'DESTROY all resources?', parameters: [
+                        [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Destroy', name: 'confirm']
                     ])
                 }
             }
@@ -23,7 +19,7 @@ pipeline {
                         script: """
                             aws sts assume-role \
                                 --role-arn "arn:aws:iam::529206289534:role/Engineer" \
-                                --role-session-name "terraform-deploy-${BUILD_NUMBER}" \
+                                --role-session-name "terraform-${BUILD_NUMBER}" \
                                 --duration-seconds 3600 \
                                 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
                                 --output text
@@ -40,57 +36,14 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                slackSend(color: '#FFFF00', message: "Starting Terraform deployment: ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
-                
-                sh '''
-                cd terraform
-                terraform init -upgrade
-                '''
+                sh 'cd terraform && terraform init'
             }
         }
 
-        stage('Terraform Plan') {
+        stage('Terraform Destroy') {
             steps {
-                sh '''
-                cd terraform
-                terraform plan -out=tfplan
-                '''
+                sh 'cd terraform && terraform destroy -auto-approve'
             }
-        }
-
-        stage('Review Plan') {
-            steps {
-                input message: 'Review Terraform plan and approve to apply', ok: 'Apply'
-            }
-        }
-
-        stage('Terraform Apply') {
-            steps {
-                slackSend(color: '#FFFF00', message: "Applying Terraform changes: ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
-                
-                sh '''
-                cd terraform
-                terraform apply -auto-approve tfplan
-                '''
-            }
-        }
-
-        stage('Output Results') {
-            steps {
-                sh '''
-                cd terraform
-                terraform output
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            slackSend(channel: '#stackjenkins', color: 'good', message: "SUCCESS: CLIXX ECS deployed - ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
-        }
-        failure {
-            slackSend(channel: '#stackjenkins', color: 'danger', message: "FAILED: Terraform deployment failed - ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
         }
     }
 }
