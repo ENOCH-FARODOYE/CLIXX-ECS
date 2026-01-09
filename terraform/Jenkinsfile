@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     stages {
         stage('Confirm Deployment') {
             steps {
@@ -11,7 +10,6 @@ pipeline {
                 }
             }
         }
-
         stage('Assume Role') {
             steps {
                 script {
@@ -26,45 +24,53 @@ pipeline {
                         """,
                         returnStdout: true
                     ).trim().split()
-
                     env.AWS_ACCESS_KEY_ID = assumeRoleOutput[0]
                     env.AWS_SECRET_ACCESS_KEY = assumeRoleOutput[1]
                     env.AWS_SESSION_TOKEN = assumeRoleOutput[2]
                 }
             }
         }
-
         stage('Terraform Init') {
             steps {
                 sh 'cd terraform && terraform init -upgrade'
             }
         }
-
+        stage('State Cleanup') {
+            steps {
+                script {
+                    sh '''
+                        cd terraform
+                        echo "Cleaning up orphaned resources from state..."
+                        terraform state rm aws_route_table_association.private_oracle_2 2>/dev/null || echo "Resource not found in state"
+                        terraform state rm aws_cloudwatch_log_group.ecs 2>/dev/null || echo "Resource not found in state"
+                        terraform state rm aws_iam_role_policy_attachment.ecs_instance 2>/dev/null || echo "Resource not found in state"
+                        terraform state rm aws_iam_role_policy_attachment.ecs_task_execution 2>/dev/null || echo "Resource not found in state"
+                        echo "State cleanup complete"
+                    '''
+                }
+            }
+        }
         stage('Terraform Plan') {
             steps {
                 sh 'cd terraform && terraform plan -out=tfplan'
             }
         }
-
         stage('Review Plan') {
             steps {
                 input message: 'Review Terraform plan and approve to apply', ok: 'Apply'
             }
         }
-
         stage('Terraform Apply') {
             steps {
                 sh 'cd terraform && terraform apply -auto-approve tfplan'
             }
         }
-
         stage('Output Results') {
             steps {
                 sh 'cd terraform && terraform output'
             }
         }
     }
-
     post {
         success {
             slackSend(channel: '#stackjenkins', color: 'good', message: "SUCCESS: CLIXX ECS deployed - ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
