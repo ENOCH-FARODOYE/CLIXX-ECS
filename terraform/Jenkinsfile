@@ -36,21 +36,13 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                slackSend(color: '#FFFF00', message: "Starting Terraform deployment: ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
-                
-                sh '''
-                cd terraform
-                terraform init -upgrade
-                '''
+                sh 'cd terraform && terraform init -upgrade'
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh '''
-                cd terraform
-                terraform plan -out=tfplan
-                '''
+                sh 'cd terraform && terraform plan -out=tfplan'
             }
         }
 
@@ -62,21 +54,13 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                slackSend(color: '#FFFF00', message: "Applying Terraform changes: ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
-                
-                sh '''
-                cd terraform
-                terraform apply -auto-approve tfplan
-                '''
+                sh 'cd terraform && terraform apply -auto-approve tfplan'
             }
         }
 
         stage('Output Results') {
             steps {
-                sh '''
-                cd terraform
-                terraform output
-                '''
+                sh 'cd terraform && terraform output'
             }
         }
     }
