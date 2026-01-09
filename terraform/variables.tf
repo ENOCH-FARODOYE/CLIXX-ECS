@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "project_name" {
   type    = string
-  default = "clixx-v2"
+  default = "clixx-ecs-prod"
 }
 
 variable "environment" {
