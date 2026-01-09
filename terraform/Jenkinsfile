@@ -43,11 +43,11 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                slackSend(color: '#FFFF00', message: "Starting Terraform deployment: ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
+                slackSend(color: '#FFFF00', message: "Starting fresh Terraform deployment: ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
                 
                 sh '''
                 cd terraform
-                terraform init
+                terraform init -migrate-state || terraform init -reconfigure
                 '''
             }
         }
