@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'enoch'
-    }
+    agent any
 
     environment {
         AWS_REGION = "us-east-1"
