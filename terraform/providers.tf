@@ -9,14 +9,5 @@ terraform {
 }
 
 provider "aws" {
-  alias  = "dev"
   region = var.aws_region
-}
-
-provider "aws" {
-  alias  = "management"
-  region = var.aws_region
-  assume_role {
-    role_arn = "arn:aws:iam::978820380225:role/Engineer"
-  }
 }

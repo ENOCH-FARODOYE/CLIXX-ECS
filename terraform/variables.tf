@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "project_name" {
   type    = string
-  default = "CLIXX"
+  default = "clixx"
 }
 
 variable "environment" {
@@ -128,7 +128,8 @@ variable "domain_name" {
   default = "ecs.clixx.enoch-stack.com"
 }
 
-variable "hosted_zone_name" {
+variable "hosted_zone_id" {
   type    = string
-  default = "enoch-stack.com"
+  default = ""
+  description = "Route53 Hosted Zone ID - leave empty to skip DNS"
 }
