@@ -34,15 +34,30 @@ pipeline {
             }
         }
 
+        stage('Clean Slate') {
+            steps {
+                sh '''
+                cd terraform
+                rm -rf .terraform .terraform.lock.hcl *.tfstate* tfplan
+                '''
+            }
+        }
+
         stage('Terraform Init') {
             steps {
-                sh 'cd terraform && terraform init'
+                sh '''
+                cd terraform
+                terraform init -backend=false
+                '''
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh 'cd terraform && terraform plan -out=tfplan'
+                sh '''
+                cd terraform
+                terraform plan -out=tfplan -state=terraform-new.tfstate
+                '''
             }
         }
 
@@ -54,13 +69,19 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                sh 'cd terraform && terraform apply -auto-approve tfplan'
+                sh '''
+                cd terraform
+                terraform apply -auto-approve -state=terraform-new.tfstate tfplan
+                '''
             }
         }
 
         stage('Outputs') {
             steps {
-                sh 'cd terraform && terraform output'
+                sh '''
+                cd terraform
+                terraform output -state=terraform-new.tfstate
+                '''
             }
         }
     }
