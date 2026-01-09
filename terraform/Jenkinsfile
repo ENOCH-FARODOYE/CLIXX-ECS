@@ -1,15 +1,24 @@
 pipeline {
     agent any
+
     stages {
-        stage('Confirm Deployment') {
+        stage('Choose Action') {
             steps {
                 script {
-                    input(id: 'confirm', message: 'Deploy CLIXX ECS Infrastructure?', parameters: [
-                        [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Deploy infrastructure', name: 'confirm']
-                    ])
+                    env.ACTION = input(
+                        message: 'What do you want to do?',
+                        parameters: [
+                            choice(
+                                name: 'ACTION',
+                                choices: ['deploy', 'destroy'],
+                                description: 'Deploy or Destroy infrastructure'
+                            )
+                        ]
+                    )
                 }
             }
         }
+
         stage('Assume Role') {
             steps {
                 script {
@@ -17,66 +26,79 @@ pipeline {
                         script: """
                             aws sts assume-role \
                                 --role-arn "arn:aws:iam::529206289534:role/Engineer" \
-                                --role-session-name "terraform-deploy-${BUILD_NUMBER}" \
+                                --role-session-name "terraform-${BUILD_NUMBER}" \
                                 --duration-seconds 3600 \
                                 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
                                 --output text
                         """,
                         returnStdout: true
                     ).trim().split()
+
                     env.AWS_ACCESS_KEY_ID = assumeRoleOutput[0]
                     env.AWS_SECRET_ACCESS_KEY = assumeRoleOutput[1]
                     env.AWS_SESSION_TOKEN = assumeRoleOutput[2]
                 }
             }
         }
+
         stage('Terraform Init') {
             steps {
                 sh 'cd terraform && terraform init -upgrade'
             }
         }
-        stage('State Cleanup') {
+
+        stage('Terraform Destroy') {
+            when {
+                expression { env.ACTION == 'destroy' }
+            }
             steps {
-                script {
-                    sh '''
-                        cd terraform
-                        echo "Cleaning up orphaned resources from state..."
-                        terraform state rm aws_route_table_association.private_oracle_2 2>/dev/null || echo "Resource not found in state"
-                        terraform state rm aws_cloudwatch_log_group.ecs 2>/dev/null || echo "Resource not found in state"
-                        terraform state rm aws_iam_role_policy_attachment.ecs_instance 2>/dev/null || echo "Resource not found in state"
-                        terraform state rm aws_iam_role_policy_attachment.ecs_task_execution 2>/dev/null || echo "Resource not found in state"
-                        echo "State cleanup complete"
-                    '''
-                }
+                sh 'cd terraform && terraform destroy -auto-approve'
             }
         }
+
         stage('Terraform Plan') {
+            when {
+                expression { env.ACTION == 'deploy' }
+            }
             steps {
                 sh 'cd terraform && terraform plan -out=tfplan'
             }
         }
+
         stage('Review Plan') {
+            when {
+                expression { env.ACTION == 'deploy' }
+            }
             steps {
-                input message: 'Review Terraform plan and approve to apply', ok: 'Apply'
+                input message: 'Review and approve', ok: 'Apply'
             }
         }
+
         stage('Terraform Apply') {
+            when {
+                expression { env.ACTION == 'deploy' }
+            }
             steps {
                 sh 'cd terraform && terraform apply -auto-approve tfplan'
             }
         }
+
         stage('Output Results') {
+            when {
+                expression { env.ACTION == 'deploy' }
+            }
             steps {
                 sh 'cd terraform && terraform output'
             }
         }
     }
+
     post {
         success {
-            slackSend(channel: '#stackjenkins', color: 'good', message: "SUCCESS: CLIXX ECS deployed - ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
+            slackSend(channel: '#stackjenkins', color: 'good', message: "SUCCESS: ${env.ACTION} completed - ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
         }
         failure {
-            slackSend(channel: '#stackjenkins', color: 'danger', message: "FAILED: Terraform deployment failed - ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
+            slackSend(channel: '#stackjenkins', color: 'danger', message: "FAILED: ${env.ACTION} failed - ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
         }
     }
 }
