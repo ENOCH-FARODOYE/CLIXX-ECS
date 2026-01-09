@@ -12,6 +12,13 @@ pipeline {
             }
         }
 
+        stage('Cleanup Workspace') {
+            steps {
+                deleteDir()
+                checkout scm
+            }
+        }
+
         stage('Assume Role') {
             steps {
                 script {
@@ -34,26 +41,13 @@ pipeline {
             }
         }
 
-        stage('Force Clean') {
-            steps {
-                sh '''
-                cd terraform
-                rm -f .terraform.lock.hcl
-                rm -f terraform.tfstate*
-                rm -f tfplan
-                rm -rf .terraform
-                ls -la
-                '''
-            }
-        }
-
         stage('Terraform Init') {
             steps {
                 slackSend(color: '#FFFF00', message: "Starting Terraform deployment: ${env.JOB_NAME} [${env.BUILD_NUMBER}]")
                 
                 sh '''
                 cd terraform
-                terraform init -reconfigure
+                terraform init
                 '''
             }
         }
