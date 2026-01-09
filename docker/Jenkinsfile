@@ -1,0 +1,97 @@
+pipeline {
+    agent {
+        label 'enoch'
+    }
+
+    environment {
+        AWS_REGION = "us-east-1"
+        AWS_ACCOUNT_ID = "529206289534"
+        IMAGE_NAME = "clixx-app"
+        ECR_REPO = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}"
+    }
+
+    stages {
+        stage('Confirm Build') {
+            steps {
+                script {
+                    input(id: 'confirm', message: 'Build CLIXX Docker image?', parameters: [
+                        [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Build Docker image', name: 'confirm']
+                    ])
+                }
+            }
+        }
+
+        stage('Create ECR Repository') {
+            steps {
+                script {
+                    def assumeRoleOutput = sh(
+                        script: """
+                            aws sts assume-role \
+                                --role-arn "arn:aws:iam::529206289534:role/Engineer" \
+                                --role-session-name "docker-build-${BUILD_NUMBER}" \
+                                --duration-seconds 3600 \
+                                --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+                                --output text
+                        """,
+                        returnStdout: true
+                    ).trim().split()
+
+                    env.AWS_ACCESS_KEY_ID = assumeRoleOutput[0]
+                    env.AWS_SECRET_ACCESS_KEY = assumeRoleOutput[1]
+                    env.AWS_SESSION_TOKEN = assumeRoleOutput[2]
+                }
+
+                slackSend(color: '#FFFF00', message: "Creating ECR repository: ${IMAGE_NAME}")
+
+                sh '''
+                aws ecr describe-repositories --repository-names ${IMAGE_NAME} --region ${AWS_REGION} || \
+                aws ecr create-repository --repository-name ${IMAGE_NAME} --region ${AWS_REGION}
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                slackSend(color: '#FFFF00', message: "Building Docker image: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
+                
+                sh '''
+                cd docker
+                docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${ECR_REPO}:${BUILD_NUMBER}
+                docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${ECR_REPO}:latest
+                '''
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                slackSend(color: '#FFFF00', message: "Pushing to ECR: ${ECR_REPO}")
+                
+                sh '''
+                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO}
+                docker push ${ECR_REPO}:${BUILD_NUMBER}
+                docker push ${ECR_REPO}:latest
+                '''
+            }
+        }
+
+        stage('Cleanup Local Images') {
+            steps {
+                sh '''
+                docker rmi ${IMAGE_NAME}:${BUILD_NUMBER} || true
+                docker rmi ${ECR_REPO}:${BUILD_NUMBER} || true
+                docker rmi ${ECR_REPO}:latest || true
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            slackSend(channel: '#stackjenkins', color: 'good', message: "SUCCESS: Docker image built - ${ECR_REPO}:${BUILD_NUMBER}")
+        }
+        failure {
+            slackSend(channel: '#stackjenkins', color: 'danger', message: "FAILED: Docker build failed - Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
+        }
+    }
+}
