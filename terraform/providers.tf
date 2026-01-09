@@ -11,9 +11,3 @@ terraform {
 provider "aws" {
   region = var.aws_region
 }
-
-# Temporary provider to clean up old resources
-provider "aws" {
-  alias  = "dev"
-  region = var.aws_region
-}
