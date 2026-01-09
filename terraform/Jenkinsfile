@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        TF_VERSION = "1.6.0"
-    }
-
     stages {
         stage('Confirm Deployment') {
             steps {
@@ -35,6 +31,15 @@ pipeline {
                     env.AWS_SECRET_ACCESS_KEY = assumeRoleOutput[1]
                     env.AWS_SESSION_TOKEN = assumeRoleOutput[2]
                 }
+            }
+        }
+
+        stage('Clean State') {
+            steps {
+                sh '''
+                cd terraform
+                rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+                '''
             }
         }
 
