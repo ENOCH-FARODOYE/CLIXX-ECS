@@ -1,5 +1,4 @@
 resource "aws_iam_role" "ecs_task_execution" {
-  provider = aws.dev
   name     = "${var.project_name}-ecs-task-execution-role"
 
   assume_role_policy = jsonencode({
@@ -29,7 +28,6 @@ resource "aws_cloudwatch_log_group" "ecs" {
 }
 
 resource "aws_ecs_task_definition" "app" {
-  provider = aws.dev
 
   family                   = "${var.project_name}-app"
   network_mode             = "bridge"
@@ -82,7 +80,6 @@ resource "aws_ecs_task_definition" "app" {
 }
 
 resource "aws_ecs_service" "app" {
-  provider = aws.dev
 
   name            = "${var.project_name}-service"
   cluster         = aws_ecs_cluster.main.id

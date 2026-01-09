@@ -1,10 +1,8 @@
 data "aws_availability_zones" "available" {
-  provider = aws.dev
   state    = "available"
 }
 
 resource "aws_vpc" "main" {
-  provider = aws.dev
 
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -16,7 +14,6 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_internet_gateway" "main" {
-  provider = aws.dev
   vpc_id   = aws_vpc.main.id
 
   tags = {
@@ -25,7 +22,6 @@ resource "aws_internet_gateway" "main" {
 }
 
 resource "aws_eip" "nat" {
-  provider = aws.dev
   domain   = "vpc"
 
   tags = {
@@ -36,7 +32,6 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_nat_gateway" "main" {
-  provider = aws.dev
 
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public_1.id
@@ -49,7 +44,6 @@ resource "aws_nat_gateway" "main" {
 }
 
 resource "aws_subnet" "public_1" {
-  provider = aws.dev
 
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_1_cidr
@@ -63,7 +57,6 @@ resource "aws_subnet" "public_1" {
 }
 
 resource "aws_subnet" "public_2" {
-  provider = aws.dev
 
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_2_cidr
@@ -77,7 +70,6 @@ resource "aws_subnet" "public_2" {
 }
 
 resource "aws_subnet" "private_app_1" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_app_subnet_1_cidr
@@ -90,7 +82,6 @@ resource "aws_subnet" "private_app_1" {
 }
 
 resource "aws_subnet" "private_app_2" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_app_subnet_2_cidr
@@ -103,7 +94,6 @@ resource "aws_subnet" "private_app_2" {
 }
 
 resource "aws_subnet" "private_mysql_1" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_mysql_subnet_1_cidr
@@ -116,7 +106,6 @@ resource "aws_subnet" "private_mysql_1" {
 }
 
 resource "aws_subnet" "private_mysql_2" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_mysql_subnet_2_cidr
@@ -129,7 +118,6 @@ resource "aws_subnet" "private_mysql_2" {
 }
 
 resource "aws_subnet" "private_oracle_1" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_oracle_subnet_1_cidr
@@ -142,7 +130,6 @@ resource "aws_subnet" "private_oracle_1" {
 }
 
 resource "aws_subnet" "private_oracle_2" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_oracle_subnet_2_cidr
@@ -155,7 +142,6 @@ resource "aws_subnet" "private_oracle_2" {
 }
 
 resource "aws_subnet" "private_java_db_1" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_java_db_subnet_1_cidr
@@ -168,7 +154,6 @@ resource "aws_subnet" "private_java_db_1" {
 }
 
 resource "aws_subnet" "private_java_db_2" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_java_db_subnet_2_cidr
@@ -181,7 +166,6 @@ resource "aws_subnet" "private_java_db_2" {
 }
 
 resource "aws_subnet" "private_java_app_1" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_java_app_subnet_1_cidr
@@ -194,7 +178,6 @@ resource "aws_subnet" "private_java_app_1" {
 }
 
 resource "aws_subnet" "private_java_app_2" {
-  provider = aws.dev
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_java_app_subnet_2_cidr
@@ -207,7 +190,6 @@ resource "aws_subnet" "private_java_app_2" {
 }
 
 resource "aws_route_table" "public" {
-  provider = aws.dev
   vpc_id   = aws_vpc.main.id
 
   route {
@@ -221,7 +203,6 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table" "private" {
-  provider = aws.dev
   vpc_id   = aws_vpc.main.id
 
   route {

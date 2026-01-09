@@ -10,7 +10,6 @@ data "aws_ami" "ecs" {
 }
 
 resource "aws_ecs_cluster" "main" {
-  provider = aws.dev
   name     = "${var.project_name}-cluster"
 
   setting {
@@ -24,7 +23,6 @@ resource "aws_ecs_cluster" "main" {
 }
 
 resource "aws_iam_role" "ecs_instance" {
-  provider = aws.dev
   name     = "${var.project_name}-ecs-instance-role"
 
   assume_role_policy = jsonencode({
@@ -54,13 +52,11 @@ resource "aws_iam_role_policy_attachment" "ecs_ssm" {
 }
 
 resource "aws_iam_instance_profile" "ecs" {
-  provider = aws.dev
   name     = "${var.project_name}-ecs-instance-profile"
   role     = aws_iam_role.ecs_instance.name
 }
 
 resource "aws_launch_template" "ecs" {
-  provider = aws.dev
 
   name_prefix   = "${var.project_name}-ecs-"
   image_id      = data.aws_ami.ecs.id
@@ -93,7 +89,6 @@ resource "aws_launch_template" "ecs" {
 }
 
 resource "aws_autoscaling_group" "ecs" {
-  provider = aws.dev
 
   name                = "${var.project_name}-ecs-asg"
   vpc_zone_identifier = [aws_subnet.private_app_1.id, aws_subnet.private_app_2.id]

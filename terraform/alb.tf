@@ -1,5 +1,4 @@
 resource "aws_lb" "main" {
-  provider = aws.dev
 
   name               = "${var.project_name}-alb"
   internal           = false
@@ -13,7 +12,6 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "app" {
-  provider = aws.dev
 
   name     = "${var.project_name}-tg"
   port     = 80
@@ -40,7 +38,6 @@ resource "aws_lb_target_group" "app" {
 }
 
 resource "aws_lb_listener" "http" {
-  provider = aws.dev
 
   load_balancer_arn = aws_lb.main.arn
   port              = 80

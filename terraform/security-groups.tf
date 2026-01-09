@@ -1,5 +1,4 @@
 resource "aws_security_group" "alb" {
-  provider = aws.dev
 
   name        = "${var.project_name}-alb-sg"
   description = "Security group for ALB"
@@ -32,7 +31,6 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group" "ecs" {
-  provider = aws.dev
 
   name        = "${var.project_name}-ecs-sg"
   description = "Security group for ECS instances"
@@ -58,7 +56,6 @@ resource "aws_security_group" "ecs" {
 }
 
 resource "aws_security_group" "rds" {
-  provider = aws.dev
 
   name        = "${var.project_name}-rds-sg"
   description = "Security group for RDS"
