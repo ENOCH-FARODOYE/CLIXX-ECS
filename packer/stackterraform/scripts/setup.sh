@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex  # Exit on error and print commands
+set -ex
 
 echo "=========================================="
 echo "Starting ECS AMI Setup"
@@ -12,7 +12,7 @@ sudo yum install -y git wget curl vim
 
 # Install Docker
 echo "2. Installing Docker..."
-sudo yum install -y docker
+sudo amazon-linux-extras install -y docker
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker ec2-user
@@ -20,9 +20,10 @@ sudo usermod -aG docker ec2-user
 # Verify Docker
 docker --version || { echo "Docker installation failed"; exit 1; }
 
-# Install ECS Agent
+# Install ECS Agent via Amazon Linux Extras
 echo "3. Installing ECS Agent..."
-sudo yum install -y ecs-init
+sudo amazon-linux-extras install -y ecs
+sudo systemctl enable --now ecs
 
 # Verify ecs-init installed
 rpm -qa | grep ecs-init || { echo "ecs-init installation failed"; exit 1; }
@@ -41,20 +42,13 @@ ECS_ENABLE_CONTAINER_METADATA=true
 ECS_ENABLE_TASK_CPU_MEM_LIMIT=true
 ECSEOF
 
-# Enable ECS service (will start on boot)
-echo "4. Enabling ECS service..."
-sudo systemctl enable ecs
-
-# Verify ECS service exists
-sudo systemctl list-unit-files | grep ecs.service || { echo "ECS service not found"; exit 1; }
-
-echo "5. Installing CloudWatch Agent..."
+echo "4. Installing CloudWatch Agent..."
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
 sudo rpm -U ./amazon-cloudwatch-agent.rpm
 rm -f amazon-cloudwatch-agent.rpm
 
 # TCP keepalive optimization
-echo "6. Configuring TCP keepalive..."
+echo "5. Configuring TCP keepalive..."
 sudo tee -a /etc/sysctl.conf > /dev/null <<SYSCTLEOF
 net.ipv4.tcp_keepalive_time=200
 net.ipv4.tcp_keepalive_intvl=200
@@ -64,14 +58,14 @@ SYSCTLEOF
 sudo sysctl -p
 
 # File descriptors
-echo "7. Configuring file descriptors..."
+echo "6. Configuring file descriptors..."
 sudo tee -a /etc/security/limits.conf > /dev/null <<LIMITSEOF
 *  soft  nofile  65536
 *  hard  nofile  65536
 LIMITSEOF
 
 # Docker optimization
-echo "8. Optimizing Docker configuration..."
+echo "7. Optimizing Docker configuration..."
 sudo mkdir -p /etc/docker
 sudo tee /etc/docker/daemon.json > /dev/null <<DOCKEREOF
 {
@@ -91,7 +85,7 @@ echo "=========================================="
 echo "Verification:"
 echo "Docker version: $(docker --version)"
 echo "ECS init package: $(rpm -qa | grep ecs-init)"
-echo "ECS service status: $(sudo systemctl list-unit-files | grep ecs.service)"
+echo "ECS service status: $(sudo systemctl is-enabled ecs)"
 echo "=========================================="
 echo "Setup complete!"
 echo "=========================================="
