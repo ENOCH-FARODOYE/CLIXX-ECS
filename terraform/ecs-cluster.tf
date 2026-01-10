@@ -64,6 +64,13 @@ resource "aws_launch_template" "ecs" {
   
   vpc_security_group_ids = [aws_security_group.ecs.id]
   
+  # CRITICAL: Enable IMDS for ECS agent to get IAM credentials
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "optional"
+    http_put_response_hop_limit = 2
+  }
+  
   user_data = base64encode(<<-EOF
               #!/bin/bash
               echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
