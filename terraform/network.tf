@@ -216,73 +216,61 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route_table_association" "public_1" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.public_1.id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "public_2" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private_app_1" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_app_1.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_app_2" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_app_2.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_mysql_1" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_mysql_1.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_mysql_2" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_mysql_2.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_oracle_1" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_oracle_1.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_oracle_2" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_oracle_2.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_java_db_1" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_java_db_1.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_java_db_2" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_java_db_2.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_java_app_1" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_java_app_1.id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_java_app_2" {
-  provider       = aws.dev
   subnet_id      = aws_subnet.private_java_app_2.id
   route_table_id = aws_route_table.private.id
 }
