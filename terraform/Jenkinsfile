@@ -2,10 +2,12 @@ pipeline {
     agent any
 
     stages {
-        stage('Clean Workspace') {
+        stage('Clean Terraform State') {
             steps {
-                deleteDir()
-                checkout scm
+                sh '''
+                cd terraform
+                rm -rf .terraform .terraform.lock.hcl terraform.tfstate* tfplan backend.tf
+                '''
             }
         }
 
@@ -50,7 +52,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                sh 'cd terraform && terraform init -upgrade'
+                sh 'cd terraform && terraform init -reconfigure -upgrade'
             }
         }
 
