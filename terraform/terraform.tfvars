@@ -13,8 +13,8 @@ db_password = "W3lcome123"
 # RDS Snapshot
 rds_snapshot_id = "clixx-db-final-snapshot"
 
-# Domain Configuration
-hosted_zone_id = "Z0561721W5EVKLETVFRG"
+# Domain Configuration - Using Management Account Hosted Zone
+hosted_zone_id = "Z09754283M1E3YFVQVDL2"
 domain_name    = "ecs.enoch-stack.com"
 
 # ECS Service
