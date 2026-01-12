@@ -6,8 +6,6 @@ output "alb_dns_name" {
   value = aws_lb.main.dns_name
 }
 
-output "domain_name" {
-  value = var.domain_name
 }
 
 output "ecs_cluster_name" {
@@ -20,5 +18,4 @@ output "rds_endpoint" {
 
 output "website_url" {
   description = "WordPress website URL"
-  value       = var.hosted_zone_id != "" ? "http://${var.domain_name}" : "http://${aws_lb.main.dns_name}"
 }
