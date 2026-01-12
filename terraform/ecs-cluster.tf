@@ -75,7 +75,7 @@ resource "aws_launch_template" "ecs" {
               #!/bin/bash
               echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
               echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
-              systemctl restart ecs
+              systemctl start ecs
               EOF
   )
   
