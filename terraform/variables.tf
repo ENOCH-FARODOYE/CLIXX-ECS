@@ -115,12 +115,12 @@ variable "rds_snapshot_id" {
 
 variable "db_name" {
   type    = string
-  default = "clixxdb"
+  default = "wordpressdb"
 }
 
 variable "db_username" {
   type    = string
-  default = "admin"
+  default = "wordpressuser"
 }
 
 variable "domain_name" {
