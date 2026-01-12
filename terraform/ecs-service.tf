@@ -87,6 +87,10 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "DB_USER"
           value = var.db_username
+        },
+        {
+          name  = "WORDPRESS_URL"
+          value = "http://${var.domain_name}"
         }
       ]
       secrets = [
