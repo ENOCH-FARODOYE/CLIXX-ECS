@@ -21,6 +21,10 @@ RUN git clone https://github.com/stackitgit/CliXX_Retail_Repository.git . \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
+# Copy custom wp-config.php that uses environment variables
+COPY wp-config.php /var/www/html/wp-config.php
+RUN chown www-data:www-data /var/www/html/wp-config.php
+
 # Apache configuration
 RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
