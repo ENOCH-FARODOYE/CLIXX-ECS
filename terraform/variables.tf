@@ -85,7 +85,7 @@ variable "ecs_ami_name" {
 
 variable "ecs_instance_type" {
   type    = string
-  default = "t3.medium"
+  default = "t3.small"
 }
 
 variable "ecs_desired_capacity" {
@@ -132,4 +132,10 @@ variable "hosted_zone_id" {
   type    = string
   default = ""
   description = "Route53 Hosted Zone ID - leave empty to skip DNS"
+}
+
+variable "db_password" {
+  description = "RDS master password"
+  type        = string
+  sensitive   = true
 }

@@ -1,5 +1,6 @@
 resource "aws_iam_role" "ecs_task_execution" {
-  name     = "${var.project_name}-ecs-task-execution-role"
+  name = "${var.project_name}-ecs-task-execution-role"
+  
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -17,6 +18,34 @@ resource "aws_iam_role" "ecs_task_execution" {
 resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   role       = aws_iam_role.ecs_task_execution.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# Add permission to read Parameter Store
+resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
+  role = aws_iam_role.ecs_task_execution.name
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameters",
+          "ssm:GetParameter"
+        ]
+        Resource = [
+          aws_ssm_parameter.db_password.arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_cloudwatch_log_group" "ecs" {
@@ -60,6 +89,12 @@ resource "aws_ecs_task_definition" "app" {
           value = var.db_username
         }
       ]
+      secrets = [
+        {
+          name      = "DB_PASSWORD"
+          valueFrom = aws_ssm_parameter.db_password.arn
+        }
+      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -73,17 +108,16 @@ resource "aws_ecs_task_definition" "app" {
 }
 
 resource "aws_ecs_service" "app" {
-  name            = "${var.project_name}-service"
+  name            = "${var.project_name}-app"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = 2
-  launch_type     = "EC2"
-
+  desired_count   = var.ecs_service_desired_count
+  
   load_balancer {
     target_group_arn = aws_lb_target_group.app.arn
     container_name   = "clixx-app"
     container_port   = 80
   }
-
+  
   depends_on = [aws_lb_listener.http]
 }
