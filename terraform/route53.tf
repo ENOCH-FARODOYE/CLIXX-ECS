@@ -1,6 +1,6 @@
-# Route53 record for ECS application
+# Route53 record in Management account hosted zone
 resource "aws_route53_record" "app" {
-  count = var.hosted_zone_id != "" ? 1 : 0
+  provider = aws.management
   
   zone_id = var.hosted_zone_id
   name    = var.domain_name
