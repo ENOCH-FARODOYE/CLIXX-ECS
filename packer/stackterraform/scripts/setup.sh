@@ -23,7 +23,11 @@ docker --version || { echo "Docker installation failed"; exit 1; }
 # Install ECS Agent via Amazon Linux Extras
 echo "3. Installing ECS Agent..."
 sudo amazon-linux-extras install -y ecs
-sudo systemctl enable --now ecs
+
+# IMPORTANT: Only ENABLE, don't start yet - will start with user data
+sudo systemctl enable ecs
+# Make sure it's stopped for AMI creation
+sudo systemctl stop ecs || true
 
 # Verify ecs-init installed
 rpm -qa | grep ecs-init || { echo "ecs-init installation failed"; exit 1; }
@@ -54,7 +58,6 @@ net.ipv4.tcp_keepalive_time=200
 net.ipv4.tcp_keepalive_intvl=200
 net.ipv4.tcp_keepalive_probes=5
 SYSCTLEOF
-
 sudo sysctl -p
 
 # File descriptors
@@ -77,7 +80,6 @@ sudo tee /etc/docker/daemon.json > /dev/null <<DOCKEREOF
   "storage-driver": "overlay2"
 }
 DOCKEREOF
-
 sudo systemctl restart docker
 
 # Final verification
@@ -85,7 +87,7 @@ echo "=========================================="
 echo "Verification:"
 echo "Docker version: $(docker --version)"
 echo "ECS init package: $(rpm -qa | grep ecs-init)"
-echo "ECS service status: $(sudo systemctl is-enabled ecs)"
+echo "ECS service enabled (not started): $(sudo systemctl is-enabled ecs)"
 echo "=========================================="
-echo "Setup complete!"
+echo "Setup complete! ECS will start on first boot with cluster config."
 echo "=========================================="
