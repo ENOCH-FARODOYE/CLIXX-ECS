@@ -1,0 +1,151 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'us-east-1'
+        AUTOMATION_ACCOUNT = '451873237827'
+        DEV_ACCOUNT = '529206289534'
+        REPO_NAME = 'clixx-app'
+    }
+    
+    stages {
+        stage('Create ECR Repository') {
+            steps {
+                script {
+                    sh """
+                        aws ecr create-repository \
+                          --repository-name ${REPO_NAME} \
+                          --region ${AWS_REGION} || echo "Repository already exists"
+                    """
+                }
+            }
+        }
+        
+        stage('Set Cross-Account Policy') {
+            steps {
+                script {
+                    sh '''
+                        cat > /tmp/ecr-policy.json <<'POLICY'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowDevAccountPull",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::529206289534:role/Engineer",
+          "arn:aws:iam::529206289534:root"
+        ],
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Action": [
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:BatchCheckLayerAvailability"
+      ]
+    },
+    {
+      "Sid": "AllowAutomationAccountManage",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::451873237827:role/stack_jenkins_aut"
+      },
+      "Action": [
+        "ecr:*"
+      ]
+    }
+  ]
+}
+POLICY
+                        
+                        aws ecr set-repository-policy \
+                          --repository-name ${REPO_NAME} \
+                          --policy-text file:///tmp/ecr-policy.json \
+                          --region ${AWS_REGION}
+                    '''
+                }
+            }
+        }
+        
+        stage('Copy Image from Dev to Automation') {
+            steps {
+                script {
+                    sh '''
+                        # Pull from Dev account
+                        DEV_CREDS=$(aws sts assume-role \
+                          --role-arn "arn:aws:iam::529206289534:role/Engineer" \
+                          --role-session-name "copy-image" \
+                          --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+                          --output text)
+                        
+                        export AWS_ACCESS_KEY_ID=$(echo $DEV_CREDS | awk '{print $1}')
+                        export AWS_SECRET_ACCESS_KEY=$(echo $DEV_CREDS | awk '{print $2}')
+                        export AWS_SESSION_TOKEN=$(echo $DEV_CREDS | awk '{print $3}')
+                        
+                        # Login to Dev ECR
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                          docker login --username AWS --password-stdin \
+                          529206289534.dkr.ecr.${AWS_REGION}.amazonaws.com
+                        
+                        # Pull image from Dev
+                        docker pull 529206289534.dkr.ecr.${AWS_REGION}.amazonaws.com/clixx-app:latest
+                        
+                        # Reset to Automation account credentials
+                        unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+                        
+                        # Tag for Automation account
+                        docker tag 529206289534.dkr.ecr.${AWS_REGION}.amazonaws.com/clixx-app:latest \
+                          451873237827.dkr.ecr.${AWS_REGION}.amazonaws.com/clixx-app:latest
+                        
+                        # Login to Automation ECR
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                          docker login --username AWS --password-stdin \
+                          451873237827.dkr.ecr.${AWS_REGION}.amazonaws.com
+                        
+                        # Push to Automation account
+                        docker push 451873237827.dkr.ecr.${AWS_REGION}.amazonaws.com/clixx-app:latest
+                        
+                        echo "Image successfully copied to Automation account!"
+                    '''
+                }
+            }
+        }
+        
+        stage('Verify Setup') {
+            steps {
+                script {
+                    sh '''
+                        echo "=== ECR Repository Details ==="
+                        aws ecr describe-repositories \
+                          --repository-names ${REPO_NAME} \
+                          --region ${AWS_REGION}
+                        
+                        echo ""
+                        echo "=== Repository Policy ==="
+                        aws ecr get-repository-policy \
+                          --repository-name ${REPO_NAME} \
+                          --region ${AWS_REGION} \
+                          --query 'policyText' \
+                          --output text
+                        
+                        echo ""
+                        echo "=== Images ==="
+                        aws ecr list-images \
+                          --repository-name ${REPO_NAME} \
+                          --region ${AWS_REGION}
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            slackSend color: 'good', message: "ECR setup complete in Automation account"
+        }
+        failure {
+            slackSend color: 'danger', message: "ECR setup failed"
+        }
+    }
+}
