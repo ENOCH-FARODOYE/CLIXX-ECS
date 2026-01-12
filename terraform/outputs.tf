@@ -17,3 +17,8 @@ output "ecs_cluster_name" {
 output "rds_endpoint" {
   value = aws_db_instance.main.endpoint
 }
+
+output "website_url" {
+  description = "WordPress website URL"
+  value       = var.hosted_zone_id != "" ? "http://${var.domain_name}" : "http://${aws_lb.main.dns_name}"
+}
