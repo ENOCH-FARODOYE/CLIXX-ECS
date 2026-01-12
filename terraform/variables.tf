@@ -139,3 +139,9 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "ecs_service_desired_count" {
+  description = "Desired number of ECS service tasks"
+  type        = number
+  default     = 2
+}

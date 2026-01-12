@@ -12,3 +12,6 @@ db_password = "W3lcome123"
 
 # RDS Snapshot (if restoring from snapshot)
 rds_snapshot_id = "clixx-db-final-snapshot"
+
+# ECS Service
+ecs_service_desired_count = 2
