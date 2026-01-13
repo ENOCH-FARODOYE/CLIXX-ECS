@@ -145,3 +145,9 @@ variable "ecs_service_desired_count" {
   type        = number
   default     = 2
 }
+
+variable "ecr_repository_url" {
+  type        = string
+  description = "ECR repository URL for Docker image"
+  default     = "529206289534.dkr.ecr.us-east-1.amazonaws.com/clixx-app"
+}
