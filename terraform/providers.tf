@@ -15,3 +15,12 @@ provider "aws" {
     session_name = "terraform-dev"
   }
 }
+
+provider "aws" {
+  alias  = "management"
+  region = var.aws_region
+  assume_role {
+    role_arn     = "arn:aws:iam::978820380225:role/TerraformManagementAccess"
+    session_name = "terraform-route53"
+  }
+}
