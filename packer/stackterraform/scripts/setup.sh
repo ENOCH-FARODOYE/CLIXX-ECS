@@ -6,12 +6,12 @@ echo "Starting ECS AMI Setup"
 echo "=========================================="
 
 # Update system
-echo "1. Updating system packages..."
+echo "1. Updating system packages"
 sudo yum update -y
 sudo yum install -y git wget curl vim
 
 # Install Docker
-echo "2. Installing Docker..."
+echo "2. Installing Docker"
 sudo amazon-linux-extras install -y docker
 sudo systemctl start docker
 sudo systemctl enable docker
@@ -21,8 +21,13 @@ sudo usermod -aG docker ec2-user
 docker --version || { echo "Docker installation failed"; exit 1; }
 
 # Install ECS Agent via Amazon Linux Extras
-echo "3. Installing ECS Agent..."
+echo "3. Installing ECS Agent"
 sudo amazon-linux-extras install -y ecs
+
+# Pre-pull the ECS agent Docker image
+echo "3b. Pre-pulling ECS Agent Docker image"
+sudo docker pull amazon/amazon-ecs-agent:latest
+sudo docker images | grep ecs-agent || { echo "ECS agent image pull failed"; exit 1; }
 
 # IMPORTANT: Only ENABLE, don't start yet - will start with user data
 sudo systemctl enable ecs
@@ -46,13 +51,13 @@ ECS_ENABLE_CONTAINER_METADATA=true
 ECS_ENABLE_TASK_CPU_MEM_LIMIT=true
 ECSEOF
 
-echo "4. Installing CloudWatch Agent..."
+echo "4. Installing CloudWatch Agent"
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
 sudo rpm -U ./amazon-cloudwatch-agent.rpm
 rm -f amazon-cloudwatch-agent.rpm
 
 # TCP keepalive optimization
-echo "5. Configuring TCP keepalive..."
+echo "5. Configuring TCP keepalive"
 sudo tee -a /etc/sysctl.conf > /dev/null <<SYSCTLEOF
 net.ipv4.tcp_keepalive_time=200
 net.ipv4.tcp_keepalive_intvl=200
@@ -61,14 +66,14 @@ SYSCTLEOF
 sudo sysctl -p
 
 # File descriptors
-echo "6. Configuring file descriptors..."
+echo "6. Configuring file descriptors"
 sudo tee -a /etc/security/limits.conf > /dev/null <<LIMITSEOF
 *  soft  nofile  65536
 *  hard  nofile  65536
 LIMITSEOF
 
 # Docker optimization
-echo "7. Optimizing Docker configuration..."
+echo "7. Optimizing Docker configuration"
 sudo mkdir -p /etc/docker
 sudo tee /etc/docker/daemon.json > /dev/null <<DOCKEREOF
 {
@@ -87,7 +92,8 @@ echo "=========================================="
 echo "Verification:"
 echo "Docker version: $(docker --version)"
 echo "ECS init package: $(rpm -qa | grep ecs-init)"
+echo "ECS agent image: $(sudo docker images | grep ecs-agent)"
 echo "ECS service enabled (not started): $(sudo systemctl is-enabled ecs)"
 echo "=========================================="
-echo "Setup complete! ECS will start on first boot with cluster config."
+echo "Setup complete! ECS will start on first boot with cluster config"
 echo "=========================================="
