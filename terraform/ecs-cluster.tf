@@ -73,14 +73,18 @@ resource "aws_launch_template" "ecs" {
   
   user_data = base64encode(<<-EOF
               #!/bin/bash
+              set -x
+              exec > >(tee /var/log/user-data.log) 2>&1
+              
+              # Configure ECS cluster
               echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
               echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
               
-              # Ensure systemd picks up any override files
-              systemctl daemon-reload
+              # Start ECS using direct init (bypass systemctl)
+              /usr/libexec/amazon-ecs-init pre-start
+              /usr/libexec/amazon-ecs-init start
               
-              # Start ECS service
-              systemctl start ecs
+              echo "User data completed successfully"
               EOF
   )
   
