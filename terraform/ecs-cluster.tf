@@ -75,6 +75,11 @@ resource "aws_launch_template" "ecs" {
               #!/bin/bash
               echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
               echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
+              
+              # Ensure systemd picks up any override files
+              systemctl daemon-reload
+              
+              # Start ECS service
               systemctl start ecs
               EOF
   )

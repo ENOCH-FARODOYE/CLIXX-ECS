@@ -104,10 +104,14 @@ echo "7b. Fixing ECS systemd service configuration"
 sudo mkdir -p /etc/systemd/system/ecs.service.d
 sudo tee /etc/systemd/system/ecs.service.d/override.conf > /dev/null <<SYSTEMDEOF
 [Service]
-TimeoutStartSec=0
+Type=forking
+TimeoutStartSec=300
 TimeoutStopSec=120
 KillMode=process
 SYSTEMDEOF
+
+sudo systemctl daemon-reload
+echo "Systemd override applied and reloaded"
 
 sudo systemctl daemon-reload
 
