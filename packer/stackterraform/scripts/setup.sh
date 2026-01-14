@@ -97,3 +97,16 @@ echo "ECS service enabled (not started): $(sudo systemctl is-enabled ecs)"
 echo "=========================================="
 echo "Setup complete! ECS will start on first boot with cluster config"
 echo "=========================================="
+
+# Clean cloud-init state for fresh runs on new instances
+echo "8. Cleaning cloud-init state for AMI"
+sudo cloud-init clean --logs --seed
+sudo rm -rf /var/lib/cloud/instances/*
+sudo rm -rf /var/lib/cloud/instance
+sudo rm -rf /var/lib/cloud/data
+sudo rm -rf /var/log/cloud-init*
+sudo rm -rf /run/cloud-init
+
+echo "=========================================="
+echo "Cloud-init cleaned - AMI ready for deployment"
+echo "=========================================="
