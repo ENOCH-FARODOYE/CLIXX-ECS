@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION = "us-east-1"
-        AWS_ACCOUNT_ID = "529206289534"
+        AWS_ACCOUNT_ID = "451873237827"
         IMAGE_NAME = "clixx-app"
         ECR_REPO = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}"
     }

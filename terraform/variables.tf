@@ -105,7 +105,7 @@ variable "ecs_min_size" {
 
 variable "docker_image" {
   type    = string
-  default = "529206289534.dkr.ecr.us-east-1.amazonaws.com/clixx-app:latest"
+  default = "451873237827.dkr.ecr.us-east-1.amazonaws.com/clixx-app:latest"
 }
 
 variable "rds_snapshot_id" {
@@ -149,5 +149,5 @@ variable "ecs_service_desired_count" {
 variable "ecr_repository_url" {
   type        = string
   description = "ECR repository URL for Docker image"
-  default     = "529206289534.dkr.ecr.us-east-1.amazonaws.com/clixx-app"
+  default     = "451873237827.dkr.ecr.us-east-1.amazonaws.com/clixx-app"
 }
