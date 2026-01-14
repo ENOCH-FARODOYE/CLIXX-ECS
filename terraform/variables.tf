@@ -85,7 +85,7 @@ variable "ecs_ami_name" {
 
 variable "ecs_instance_type" {
   type    = string
-  default = "t3.small"
+  default = "t3.medium"
 }
 
 variable "ecs_desired_capacity" {
