@@ -98,6 +98,19 @@ echo "=========================================="
 echo "Setup complete! ECS will start on first boot with cluster config"
 echo "=========================================="
 
+
+# Fix ECS systemd service timeouts
+echo "7b. Fixing ECS systemd service configuration"
+sudo mkdir -p /etc/systemd/system/ecs.service.d
+sudo tee /etc/systemd/system/ecs.service.d/override.conf > /dev/null <<SYSTEMDEOF
+[Service]
+TimeoutStartSec=0
+TimeoutStopSec=120
+KillMode=process
+SYSTEMDEOF
+
+sudo systemctl daemon-reload
+
 # Clean cloud-init state for fresh runs on new instances
 echo "8. Cleaning cloud-init state for AMI"
 sudo cloud-init clean --logs --seed
